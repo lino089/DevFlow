@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1045229711154",
+    "project_id": "devflow-f5d49",
+    "storage_bucket": "devflow-f5d49.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1045229711154:android:7f35424b5b3204e320712b",
+        "android_client_info": {
+          "package_name": "com.example.devflow"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBd-m9sQrwDiSb3bW0hqVjo30brsr5RAZQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
