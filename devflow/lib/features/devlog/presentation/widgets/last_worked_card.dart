@@ -6,8 +6,15 @@ import '../../domain/flow_entry_model.dart';
 
 class LastWorkedCard extends StatelessWidget {
   final FlowEntry entry;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
-  const LastWorkedCard({super.key, required this.entry});
+  const LastWorkedCard({
+    super.key,
+    required this.entry,
+    this.onEdit,
+    this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +38,7 @@ class LastWorkedCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Tag & Waktu
+          // Header: Tag & Waktu & Actions
           Row(
             children: [
               Container(
@@ -65,6 +72,30 @@ class LastWorkedCard extends StatelessWidget {
                   color: AppColors.textSecondary,
                 ),
               ),
+              if (onEdit != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  color: AppColors.textSecondary,
+                  tooltip: 'Edit Alur Ini',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  splashRadius: 16,
+                  onPressed: onEdit,
+                ),
+              ],
+              if (onDelete != null) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 16),
+                  color: AppColors.error.withValues(alpha: 0.8),
+                  tooltip: 'Hapus Alur Ini',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  splashRadius: 16,
+                  onPressed: onDelete,
+                ),
+              ],
             ],
           ),
 

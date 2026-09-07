@@ -20,6 +20,17 @@ class DevLogView extends ConsumerWidget {
     );
   }
 
+  void _openEditDialog(BuildContext context, FlowEntry entry) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AddFlowEntryDialog(
+        workspaceId: entry.workspaceId,
+        initialEntry: entry,
+      ),
+    );
+  }
+
   void _confirmDelete(BuildContext context, WidgetRef ref, FlowEntry entry) {
     showDialog(
       context: context,
@@ -158,7 +169,11 @@ class DevLogView extends ConsumerWidget {
                           if (latest == null) return const SizedBox.shrink();
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 20),
-                            child: LastWorkedCard(entry: latest),
+                            child: LastWorkedCard(
+                              entry: latest,
+                              onEdit: () => _openEditDialog(context, latest),
+                              onDelete: () => _confirmDelete(context, ref, latest),
+                            ),
                           );
                         },
                         loading: () => const SizedBox.shrink(),
@@ -243,11 +258,26 @@ class DevLogView extends ConsumerWidget {
                                   color: AppColors.textSecondary,
                                 ),
                               ),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.delete_outline,
-                                    size: 18, color: AppColors.textMuted),
-                                onPressed: () =>
-                                    _confirmDelete(context, ref, entry),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined,
+                                        size: 18, color: AppColors.textSecondary),
+                                    tooltip: 'Edit Alur',
+                                    splashRadius: 18,
+                                    onPressed: () =>
+                                        _openEditDialog(context, entry),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline,
+                                        size: 18, color: AppColors.textMuted),
+                                    tooltip: 'Hapus Alur',
+                                    splashRadius: 18,
+                                    onPressed: () =>
+                                        _confirmDelete(context, ref, entry),
+                                  ),
+                                ],
                               ),
                               children: [
                                 Padding(

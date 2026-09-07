@@ -6,6 +6,7 @@ abstract class DevLogRepository {
   Stream<List<FlowEntry>> watchFlowEntries(String workspaceId);
   Stream<FlowEntry?> watchLatestFlowEntry(String workspaceId);
   Future<void> createFlowEntry(FlowEntry entry);
+  Future<void> updateFlowEntry(FlowEntry entry);
   Future<void> deleteFlowEntry(String workspaceId, String entryId);
 }
 
@@ -45,6 +46,11 @@ class FirestoreDevLogRepository implements DevLogRepository {
   @override
   Future<void> createFlowEntry(FlowEntry entry) async {
     await _flowEntriesCol(entry.workspaceId).doc(entry.id).set(entry.toMap());
+  }
+
+  @override
+  Future<void> updateFlowEntry(FlowEntry entry) async {
+    await _flowEntriesCol(entry.workspaceId).doc(entry.id).update(entry.toMap());
   }
 
   @override

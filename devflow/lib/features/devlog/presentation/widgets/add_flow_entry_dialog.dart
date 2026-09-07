@@ -7,8 +7,15 @@ import '../devlog_providers.dart';
 
 class AddFlowEntryDialog extends ConsumerStatefulWidget {
   final String workspaceId;
+  final FlowEntry? initialEntry;
 
-  const AddFlowEntryDialog({super.key, required this.workspaceId});
+  const AddFlowEntryDialog({
+    super.key,
+    required this.workspaceId,
+    this.initialEntry,
+  });
+
+  bool get isEditing => initialEntry != null;
 
   @override
   ConsumerState<AddFlowEntryDialog> createState() => _AddFlowEntryDialogState();
@@ -32,9 +39,32 @@ class _AddFlowEntryDialogState extends ConsumerState<AddFlowEntryDialog> {
   @override
   void initState() {
     super.initState();
-    // Inisialisasi minimal 1 langkah kosong
-    _stepControllers.add(TextEditingController());
-    _stepFocusNodes.add(FocusNode());
+    final entry = widget.initialEntry;
+    if (entry != null) {
+      _featureNameController.text = entry.featureName;
+      _stateNotesController.text = entry.stateNotes;
+      _nextTodoController.text = entry.nextTodo;
+      _keyFilesController.text = entry.keyFiles.join(', ');
+      _tagsController.text = entry.tags.join(', ');
+      if (entry.keyFiles.isNotEmpty ||
+          entry.stateNotes.isNotEmpty ||
+          entry.tags.isNotEmpty) {
+        _isOptionsExpanded = true;
+      }
+      if (entry.flowSteps.isNotEmpty) {
+        for (final s in entry.flowSteps) {
+          _stepControllers.add(TextEditingController(text: s));
+          _stepFocusNodes.add(FocusNode());
+        }
+      } else {
+        _stepControllers.add(TextEditingController());
+        _stepFocusNodes.add(FocusNode());
+      }
+    } else {
+      // Inisialisasi minimal 1 langkah kosong
+      _stepControllers.add(TextEditingController());
+      _stepFocusNodes.add(FocusNode());
+    }
   }
 
   void _addStep() {
@@ -108,34 +138,59 @@ class _AddFlowEntryDialogState extends ConsumerState<AddFlowEntryDialog> {
           .where((t) => t.isNotEmpty)
           .toList();
 
-      final newEntry = FlowEntry(
-        id: const Uuid().v4(),
-        workspaceId: widget.workspaceId,
-        featureName: _featureNameController.text.trim(),
-        flowSteps: steps,
-        keyFiles: keyFiles,
-        stateNotes: _stateNotesController.text.trim(),
-        nextTodo: _nextTodoController.text.trim(),
-        tags: tags,
-        createdAt: DateTime.now(),
-      );
-
-      await ref.read(devlogRepositoryProvider).createFlowEntry(newEntry);
-
-      if (mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Alur logika berhasil dicatat!'),
-            backgroundColor: AppColors.success,
-          ),
+      if (widget.isEditing) {
+        final updatedEntry = widget.initialEntry!.copyWith(
+          featureName: _featureNameController.text.trim(),
+          flowSteps: steps,
+          keyFiles: keyFiles,
+          stateNotes: _stateNotesController.text.trim(),
+          nextTodo: _nextTodoController.text.trim(),
+          tags: tags,
         );
+
+        await ref.read(devlogRepositoryProvider).updateFlowEntry(updatedEntry);
+
+        if (mounted) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Alur logika berhasil diperbarui!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } else {
+        final newEntry = FlowEntry(
+          id: const Uuid().v4(),
+          workspaceId: widget.workspaceId,
+          featureName: _featureNameController.text.trim(),
+          flowSteps: steps,
+          keyFiles: keyFiles,
+          stateNotes: _stateNotesController.text.trim(),
+          nextTodo: _nextTodoController.text.trim(),
+          tags: tags,
+          createdAt: DateTime.now(),
+        );
+
+        await ref.read(devlogRepositoryProvider).createFlowEntry(newEntry);
+
+        if (mounted) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Alur logika berhasil dicatat!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal menyimpan alur: $e'),
+            content: Text(widget.isEditing
+                ? 'Gagal memperbarui alur: $e'
+                : 'Gagal menyimpan alur: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -179,12 +234,19 @@ class _AddFlowEntryDialogState extends ConsumerState<AddFlowEntryDialog> {
                 // Header
                 Row(
                   children: [
-                    const Icon(Icons.note_add_outlined,
-                        color: AppColors.primary, size: 22),
+                    Icon(
+                      widget.isEditing
+                          ? Icons.edit_note_outlined
+                          : Icons.note_add_outlined,
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
                     const SizedBox(width: 10),
-                    const Text(
-                      'Catat Alur Logika Baru',
-                      style: TextStyle(
+                    Text(
+                      widget.isEditing
+                          ? 'Edit Alur Logika'
+                          : 'Catat Alur Logika Baru',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textSecondary,
@@ -426,10 +488,15 @@ class _AddFlowEntryDialogState extends ConsumerState<AddFlowEntryDialog> {
                                 color: Colors.black,
                               ),
                             )
-                          : const Icon(Icons.save_outlined, size: 18),
-                      label: const Text(
-                        'Simpan Alur',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                          : Icon(
+                              widget.isEditing
+                                  ? Icons.check_circle_outline
+                                  : Icons.save_outlined,
+                              size: 18,
+                            ),
+                      label: Text(
+                        widget.isEditing ? 'Perbarui Alur' : 'Simpan Alur',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
