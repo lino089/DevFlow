@@ -251,12 +251,29 @@ class DevLogView extends ConsumerWidget {
                                   color: AppColors.textPrimary,
                                 ),
                               ),
-                              subtitle: Text(
-                                '${entry.flowSteps.length} langkah • ${dateFormat.format(entry.createdAt)}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.textSecondary,
-                                ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${entry.flowSteps.length} langkah • ${dateFormat.format(entry.createdAt)}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  if (entry.stateNotes.isNotEmpty) ...[
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      'Catatan: ${entry.stateNotes}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,

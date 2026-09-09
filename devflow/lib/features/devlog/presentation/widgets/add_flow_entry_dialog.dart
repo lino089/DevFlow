@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -270,6 +271,9 @@ class _AddFlowEntryDialogState extends ConsumerState<AddFlowEntryDialog> {
                         // Nama Fitur (Clean Title Input)
                         TextFormField(
                           controller: _featureNameController,
+                          minLines: 1,
+                          maxLines: null,
+                          keyboardType: TextInputType.multiline,
                           style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -320,50 +324,89 @@ class _AddFlowEntryDialogState extends ConsumerState<AddFlowEntryDialog> {
                           final focusNode = _stepFocusNodes[index];
 
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.only(bottom: 10),
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                CircleAvatar(
-                                  radius: 12,
-                                  backgroundColor:
-                                      AppColors.primary.withValues(alpha: 0.2),
-                                  child: Text(
-                                    '${index + 1}',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.primary,
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: CircleAvatar(
+                                    radius: 12,
+                                    backgroundColor:
+                                        AppColors.primary.withValues(alpha: 0.2),
+                                    child: Text(
+                                      '${index + 1}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primary,
+                                      ),
                                     ),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: TextField(
-                                    controller: controller,
-                                    focusNode: focusNode,
-                                    decoration: InputDecoration(
-                                      hintText:
-                                          'Langkah ${index + 1}: Apa yang dieksekusi kode...',
-                                      filled: true,
-                                      fillColor: AppColors.surfaceVariant.withValues(alpha: 0.3),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                        borderSide: BorderSide.none,
+                                  child: Focus(
+                                    onKeyEvent: (node, event) {
+                                      if (event is KeyDownEvent &&
+                                          event.logicalKey ==
+                                              LogicalKeyboardKey.enter &&
+                                          (HardwareKeyboard.instance.isControlPressed ||
+                                              HardwareKeyboard.instance.isMetaPressed)) {
+                                        _addStep();
+                                        return KeyEventResult.handled;
+                                      }
+                                      return KeyEventResult.ignored;
+                                    },
+                                    child: TextField(
+                                      controller: controller,
+                                      focusNode: focusNode,
+                                      minLines: 1,
+                                      maxLines: null,
+                                      keyboardType: TextInputType.multiline,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        height: 1.4,
+                                        color: AppColors.textPrimary,
                                       ),
-                                      isDense: true,
+                                      decoration: InputDecoration(
+                                        hintText:
+                                            'Langkah ${index + 1}: Apa yang dieksekusi kode...',
+                                        filled: true,
+                                        fillColor: AppColors.surfaceVariant
+                                            .withValues(alpha: 0.3),
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        isDense: true,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 10,
+                                        ),
+                                      ),
                                     ),
-                                    onSubmitted: (_) => _addStep(),
                                   ),
                                 ),
                                 if (_stepControllers.length > 1) ...[
                                   const SizedBox(width: 4),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.remove_circle_outline,
-                                      size: 18,
-                                      color: AppColors.error,
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: IconButton(
+                                      icon: const Icon(
+                                        Icons.remove_circle_outline,
+                                        size: 18,
+                                        color: AppColors.error,
+                                      ),
+                                      tooltip: 'Hapus langkah',
+                                      splashRadius: 16,
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(
+                                          minWidth: 28, minHeight: 28),
+                                      onPressed: () => _removeStep(index),
                                     ),
-                                    onPressed: () => _removeStep(index),
                                   ),
                                 ],
                               ],
