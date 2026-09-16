@@ -16,12 +16,130 @@ class _AuthViewState extends ConsumerState<AuthView> {
   final _formKey = GlobalKey<FormState>();
 
   bool _isLogin = true;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _showForgotPasswordDialog() {
+    final resetEmailController =
+        TextEditingController(text: _emailController.text.trim());
+    final resetFormKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: AppColors.surfaceBorder),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.lock_reset, color: AppColors.primary, size: 22),
+            SizedBox(width: 8),
+            Text(
+              'Lupa Kata Sandi',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 380,
+          child: Form(
+            key: resetFormKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Masukkan alamat email Anda yang terdaftar. Kami akan mengirimkan tautan untuk mengatur ulang kata sandi.',
+                  style:
+                      TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: resetEmailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Alamat Email',
+                    filled: true,
+                    fillColor: AppColors.surfaceVariant.withValues(alpha: 0.3),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(Icons.email_outlined, size: 20),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Email wajib diisi';
+                    }
+                    if (!val.contains('@') || !val.contains('.')) {
+                      return 'Format email tidak valid';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () async {
+              if (!resetFormKey.currentState!.validate()) return;
+              final email = resetEmailController.text.trim();
+              Navigator.of(ctx).pop();
+
+              final success = await ref
+                  .read(authControllerProvider.notifier)
+                  .sendPasswordReset(email);
+
+              if (mounted) {
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          'Tautan reset kata sandi telah dikirim! Silakan periksa kotak masuk/spam email Anda.'),
+                      backgroundColor: AppColors.success,
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
+                } else {
+                  final error = ref.read(authControllerProvider).error;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Gagal mengirim tautan reset: $error'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text(
+              'Kirim Tautan',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _submit() async {
@@ -116,7 +234,7 @@ class _AuthViewState extends ConsumerState<AuthView> {
                 
                 TextFormField(
                   controller: _passwordController,
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     filled: true,
@@ -126,6 +244,23 @@ class _AuthViewState extends ConsumerState<AuthView> {
                       borderSide: BorderSide.none,
                     ),
                     prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 20,
+                        color: AppColors.textSecondary,
+                      ),
+                      tooltip: _obscurePassword
+                          ? 'Tampilkan kata sandi'
+                          : 'Sembunyikan kata sandi',
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                   ),
                   validator: (val) {
                     if (val == null || val.isEmpty) return 'Password wajib diisi';
@@ -133,6 +268,28 @@ class _AuthViewState extends ConsumerState<AuthView> {
                     return null;
                   },
                 ),
+                if (_isLogin) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _showForgotPasswordDialog,
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'Lupa kata sandi?',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 
                 ElevatedButton(
